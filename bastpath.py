@@ -10,10 +10,10 @@ class MatchMode(Enum):
     STARTSWITH = 1
     ENDSWITH = 2
     CONTAINS = 3
+    REGEX = 4
 class Entity:
-    def __init__(self, desc, mode: MatchMode, re, negate):
+    def __init__(self, desc, mode: MatchMode, negate):
         self.desc = desc
-        self.re = re
         self.mode = mode
         self.negate = negate
 
@@ -33,34 +33,36 @@ class Expr:
         if len(self.keys)==1 and self.keys[0].mode==MatchMode.EXACT:
             if self.keys[0].desc is None:
                 tag = "*"
-            elif not self.keys[0].re:
-                tag = self.keys[0].desc
             else:
                 tag = self.keys[0].desc
         else:
             tag = "*"
             for k in self.keys:
-                if k.re:
-                    orconds.append(f"name()={k.desc}")
-                else:
-                    if k.mode == MatchMode.EXACT:
-                        neg = ("","!")[k.negate]
-                        orconds.append(f'name(){neg}="{k.desc}"')
-                    elif k.mode == MatchMode.STARTSWITH:
-                        cond = f'starts-with(name(), "{k.desc}")'
-                        if k.negate:
-                            cond = f"not({cond})"
-                        orconds.append(cond)
-                    elif k.mode == MatchMode.ENDSWITH:
-                        cond = f'ends-with(name(), "{k.desc}")'
-                        if k.negate:
-                            cond = f"not({cond})"
-                        orconds.append(cond)
-                    elif k.mode == MatchMode.CONTAINS:
-                        cond = f'contains(name(), "{k.desc}")'
-                        if k.negate:
-                            cond = f"not({cond})"
-                        orconds.append(cond)
+                if k.mode == MatchMode.EXACT:
+                    neg = ("","!")[k.negate]
+                    orconds.append(f'name(){neg}="{k.desc}"')
+                elif k.mode == MatchMode.STARTSWITH:
+                    cond = f'starts-with(name(), "{k.desc}")'
+                    if k.negate:
+                        cond = f"not({cond})"
+                    orconds.append(cond)
+                elif k.mode == MatchMode.ENDSWITH:
+                    cond = f'ends-with(name(), "{k.desc}")'
+                    if k.negate:
+                        cond = f"not({cond})"
+                    orconds.append(cond)
+                elif k.mode == MatchMode.CONTAINS:
+                    cond = f'contains(name(), "{k.desc}")'
+                    if k.negate:
+                        cond = f"not({cond})"
+                    orconds.append(cond)
+                elif k.mode == MatchMode.REGEX:
+                    if k.desc[1]:
+                        flags = f', "{k.desc[1]}"'
+                    cond = f'matches(name(), "{k.desc[0]}"{flags})'
+                    if k.negate:
+                        cond = f"not({cond})"
+                    orconds.append(cond)
 
         if orconds:
             cond = f"[({' or '.join(orconds)})]"
@@ -136,7 +138,7 @@ class XPathTransformer(NodeVisitor):
             mode = MatchMode.STARTSWITH
         else:
             mode = MatchMode.EXACT
-        return Entity(node.children[1].text, mode, False, False)
+        return Entity(node.children[1].text, mode, False)
 
     def visit_NOT(self, node, visited_children):
         return "!"
@@ -151,13 +153,13 @@ class XPathTransformer(NodeVisitor):
             mode = MatchMode.STARTSWITH
         else:
             mode = MatchMode.EXACT
-        return Entity(node.text.decode('string_escape'), mode, False, False)
+        return Entity(node.text.decode('string_escape'), mode, False)
 
     def visit_Wildcard(self, node, visited_children):
-        return Entity(None, MatchMode.EXACT, False, False)
+        return Entity(None, MatchMode.EXACT, False)
 
     def visit_Regex(self, node, visited_children):
-        return Entity(node.text, MatchMode.EXACT, True, False)
+        return Entity((node.children[0].text[1:-1], node.children[1].text), MatchMode.REGEX, False)
 
     def generic_visit(self, node, visited_children):
         """ The generic visit method. """
@@ -201,6 +203,10 @@ if __name__=="__main__":
         ],
         [
             "..a..,b=c",
+            ""
+        ],
+        [
+            "/x/i,b=c",
             ""
         ],
         [
