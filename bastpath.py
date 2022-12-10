@@ -114,6 +114,8 @@ class XPathTransformer(NodeVisitor):
         ret = [visited_children[0]]
         for c in visited_children[1]:
             ret.append(c[1])
+        if len(ret)>1 and any([c.desc is None for c in ret]):
+            raise SyntaxError("Wildcard in tags list")
         return Entities(ret)
 
     def visit_COMMA(self, node, visited_children):
@@ -124,7 +126,7 @@ class XPathTransformer(NodeVisitor):
         ret = visited_children[1][0]
         if visited_children[0] == "!":
             if ret.desc is None:
-                raise ValueError("Cannot negate wildcard")
+                raise SyntaxError("Cannot negate wildcard")
             ret.negate = True
         return ret
 
@@ -180,6 +182,19 @@ class Bastpath:
         return self.visitor.visit(self.ast)
 
 if __name__=="__main__":
+    errors = [
+        "a,*",
+    ]
+    for sel in errors:
+        ok = True
+        try:
+            Bastpath(sel).toXPath()
+            ok = False
+        except:
+            pass
+        if not ok:
+            print("Should be error", sel)
+
     tests = [
         [
             "a",
