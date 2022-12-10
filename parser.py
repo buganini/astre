@@ -95,18 +95,6 @@ if __name__=="__main__":
             'k1=v1 k2=v2',
             "indirect child(k=v)"
         ],
-        [
-            '(k1=v1 k2=v2)',
-            "()"
-        ],
-        [
-            '(k1=v1 k2=v2) > k3=v3',
-            "()"
-        ],
-        [
-            'k1=v1 (k2=v2  k3=v3)',
-            "()"
-        ],
     ]
     for test, desc in tests:
         print(test)
