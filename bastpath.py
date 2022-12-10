@@ -29,7 +29,7 @@ class Expr:
         self.values = values
 
     def __repr__(self):
-        orconds = []
+        keyconds = []
         if len(self.keys)==1 and self.keys[0].mode==MatchMode.EXACT:
             if self.keys[0].desc is None:
                 tag = "*"
@@ -40,32 +40,71 @@ class Expr:
             for k in self.keys:
                 if k.mode == MatchMode.EXACT:
                     neg = ("","!")[k.negate]
-                    orconds.append(f'name(){neg}="{k.desc}"')
+                    keyconds.append(f'name(){neg}="{k.desc}"')
                 elif k.mode == MatchMode.STARTSWITH:
                     cond = f'starts-with(name(), "{k.desc}")'
                     if k.negate:
                         cond = f"not({cond})"
-                    orconds.append(cond)
+                    keyconds.append(cond)
                 elif k.mode == MatchMode.ENDSWITH:
                     cond = f'ends-with(name(), "{k.desc}")'
                     if k.negate:
                         cond = f"not({cond})"
-                    orconds.append(cond)
+                    keyconds.append(cond)
                 elif k.mode == MatchMode.CONTAINS:
                     cond = f'contains(name(), "{k.desc}")'
                     if k.negate:
                         cond = f"not({cond})"
-                    orconds.append(cond)
+                    keyconds.append(cond)
                 elif k.mode == MatchMode.REGEX:
                     if k.desc[1]:
                         flags = f', "{k.desc[1]}"'
+                    else:
+                        flags = ""
                     cond = f'matches(name(), "{k.desc[0]}"{flags})'
                     if k.negate:
                         cond = f"not({cond})"
-                    orconds.append(cond)
+                    keyconds.append(cond)
 
-        if orconds:
-            cond = f"[({' or '.join(orconds)})]"
+        valconds = []
+        if self.values:
+            for v in self.values:
+                if v.mode == MatchMode.EXACT:
+                    neg = ("","!")[v.negate]
+                    valconds.append(f'string(.){neg}="{v.desc}"')
+                elif v.mode == MatchMode.STARTSWITH:
+                    cond = f'starts-with(string(.), "{v.desc}")'
+                    if v.negate:
+                        cond = f"not({cond})"
+                    valconds.append(cond)
+                elif v.mode == MatchMode.ENDSWITH:
+                    cond = f'ends-with(string(.), "{v.desc}")'
+                    if v.negate:
+                        cond = f"not({cond})"
+                    valconds.append(cond)
+                elif v.mode == MatchMode.CONTAINS:
+                    cond = f'contains(string(.), "{v.desc}")'
+                    if v.negate:
+                        cond = f"not({cond})"
+                    valconds.append(cond)
+                elif v.mode == MatchMode.REGEX:
+                    if v.desc[1]:
+                        flags = f', "{v.desc[1]}"'
+                    else:
+                        flags = ""
+                    cond = f'matches(string(.), "{v.desc[0]}"{flags})'
+                    if v.negate:
+                        cond = f"not({cond})"
+                    valconds.append(cond)
+
+        andconds = []
+        if keyconds:
+            andconds.append(f"({' or '.join(keyconds)})")
+        if valconds:
+            andconds.append(f"({' or '.join(valconds)})")
+
+        if andconds:
+            cond = f"[({' and '.join(andconds)})]"
         else:
             cond = ""
         return f"{tag}{cond}"
