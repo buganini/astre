@@ -72,7 +72,15 @@ if __name__=="__main__":
             "direct child (key only)"
         ],
         [
+            'k1 > k2 > k3',
+            "direct child (key only)"
+        ],
+        [
             'k1 k2',
+            "indirect child (key only)"
+        ],
+        [
+            'k1 k2 k3',
             "indirect child (key only)"
         ],
         [
