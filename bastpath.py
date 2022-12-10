@@ -39,8 +39,8 @@ class Expr:
             tag = "*"
             for k in self.keys:
                 if k.mode == MatchMode.EXACT:
-                    neg = ("","!")[k.negate]
-                    keyconds.append(f'name(){neg}="{k.desc}"')
+                    op = ("=","!=")[k.negate]
+                    keyconds.append(f'name(){op}"{k.desc}"')
                 elif k.mode == MatchMode.STARTSWITH:
                     cond = f'starts-with(name(), "{k.desc}")'
                     if k.negate:
@@ -170,8 +170,8 @@ class XPathTransformer(NodeVisitor):
         return ret
 
     def visit_Identifier(self, node, visited_children):
-        # print("!Identifier", dir(node))
-        if node.children[0].text and node.children[2]:
+        # print("!Identifier", node, "=>", visited_children)
+        if node.children[0].text and node.children[2].text:
             mode = MatchMode.CONTAINS
         elif node.children[0].text:
             mode = MatchMode.ENDSWITH
@@ -268,11 +268,19 @@ if __name__=="__main__":
             ""
         ],
         [
+            "..a=..b",
+            ""
+        ],
+        [
             "a=b..",
             ""
         ],
         [
             "a=..b..",
+            ""
+        ],
+        [
+            "a=!..b..",
             ""
         ],
         [

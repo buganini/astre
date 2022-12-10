@@ -123,6 +123,10 @@ if __name__=="__main__":
             'k1=v1 k2=v2',
             "indirect child(k=v)"
         ],
+        [
+            "k=..v",
+            "partial match"
+        ]
     ]
     for test, desc in tests:
         print(test)
