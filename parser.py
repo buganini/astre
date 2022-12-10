@@ -4,11 +4,13 @@ grammar = Grammar(r"""
 Selector = IndirectChild IndirectChild*
 IndirectChild = DirectChild (" "+ DirectChild)* 
 DirectChild = Attr (CHILDOP Attr)*
-Attr = (Identifiers !(ValueOp / COMMA)) / (Identifiers ValueOp Identifiers)
+Attr = (Identifiers !(COMPARATOR / COMMA)) / (Identifiers COMPARATOR Identifiers)
 
-Identifiers = (Identifier / String / Regex / Wildcard) (COMMA (Identifier / String / Regex / Wildcard))*
+Identifiers = ENTITY (COMMA ENTITY)*
+ENTITY = NOT? (Identifier / String / Regex / Wildcard)
 
-ValueOp = " "* ("!=" / "=") " "*
+NOT = "!"
+COMPARATOR = ~r" *(!=|=) *"
 COMMA = " "* "," " "*
 CHILDOP = " "* ">" " "*
 
@@ -45,7 +47,19 @@ if __name__=="__main__":
         ],
         [
             'k!=v',
-            "ne"
+            "wildcard"
+        ],
+        [
+            'k!=v1,v2',
+            "wildcard"
+        ],
+        [
+            'k=!v',
+            "wildcard"
+        ],
+        [
+            'k=!v1,!v2',
+            "wildcard"
         ],
         [
             'k1,k2=v',
