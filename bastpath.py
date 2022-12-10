@@ -17,38 +17,57 @@ class Entity:
         return f"{neg}{desc}"
 
 class Expr:
-    def __init__(self, a, op, b):
-        self.a = a
+    def __init__(self, keys, op, values):
+        self.keys = keys
         self.op = op
-        self.b = b
+        self.values = values
 
     def __repr__(self):
-        if self.op is None:
-            return f"{self.a}"
+        orconds = []
+        if len(self.keys)==1:
+            if self.keys[0].desc is None:
+                tag = "*"
+            elif not self.keys[0].re:
+                tag = self.keys[0].desc
+            else:
+                tag = self.keys[0].desc
         else:
-            return f"{self.a}{self.op}{self.b}"
+            tag = "*"
+            for k in self.keys:
+                if k.re:
+                    orconds.append(f"name()={k.desc}")
+                else:
+                    neg = ("","!")[k.negate]
+                    orconds.append(f'name(){neg}="{k.desc}"')
+
+        if orconds:
+            cond = f"[({' or '.join(orconds)})]"
+        else:
+            cond = ""
+        return f"{tag}{cond}"
 
 class XPathTransformer(NodeVisitor):
     PROMOTES = ["!"]
 
     def visit_Selector(self, node, visited_children):
         # print("!Selector", node, "=>", visited_children)
-        ret = [visited_children[0]]
+        ret = ["//", visited_children[0]]
         for c in visited_children[1]:
-            if c[0]:
-                ret.append("//")
-            else:
+            if c[0]: # direct
                 ret.append("/")
+            else:
+                ret.append("//")
             ret.append(c[1])
-        return ret
+        return "".join([str(x) for x in ret])
 
     def visit_Attr(self, node, visited_children):
         # print("!Attr", node, "=>", visited_children)
-        return visited_children
+        return visited_children[0]
 
     def visit_AttrKey(self, node, visited_children):
         # print("!AttrKey", node, "=>", visited_children)
-        return Expr(visited_children[0], None, None)
+        entities = visited_children[0]
+        return Expr(entities, None, None)
 
     def visit_AttrKeyValue(self, node, visited_children):
         # print("!AttrKeyValue", node, "=>", visited_children)
@@ -162,6 +181,4 @@ if __name__=="__main__":
         b = Bastpath(sel)
         print(sel)
         print(b.toXPath())
-        # for data, expected in tdata:
-        #     r = b.check(data)
-        #     print(r, expected)
+        print()
