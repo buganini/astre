@@ -16,8 +16,8 @@ CHILDOP = DIROP / INDIROP
 DIROP = " "* ">" " "*
 INDIROP = " "+
 
-Identifier = ~r"[A-Z][A-Z0-9_-]*"i
-String = ~r'"(?:[^"\\]|\\.)*"' / ~r"'(?:[^'\\]|\\.)*'"
+Identifier = ".."? ~r"[A-Z][A-Z0-9_-]*"i ".."?
+String = ".."? (~r'"(?:[^"\\]|\\.)*"' / ~r"'(?:[^'\\]|\\.)*'") ".."?
 Regex = ~r"/(?:[^/\\]|\\.)*/\w*"
 Wildcard = "*"
 """)
@@ -33,6 +33,18 @@ if __name__=="__main__":
         ],
         [
             'k = v',
+            "spaces"
+        ],
+        [
+            'k = ..v',
+            "spaces"
+        ],
+        [
+            'k = v..',
+            "spaces"
+        ],
+        [
+            'k = ..v..',
             "spaces"
         ],
         [

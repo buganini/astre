@@ -1,14 +1,20 @@
+from enum import Enum
 from parsimonious.nodes import NodeVisitor
 from parser import parse
 
 class Entities(list):
     def __repr__(self):
         return f"{{{', '.join([x.__repr__() for x in self])}}}"
-
+class MatchMode(Enum):
+    EXACT = 0
+    STARTSWITH = 1
+    ENDSWITH = 2
+    CONTAINS = 3
 class Entity:
-    def __init__(self, desc, re, negate):
+    def __init__(self, desc, mode: MatchMode, re, negate):
         self.desc = desc
         self.re = re
+        self.mode = mode
         self.negate = negate
 
     def __repr__(self):
@@ -24,7 +30,7 @@ class Expr:
 
     def __repr__(self):
         orconds = []
-        if len(self.keys)==1:
+        if len(self.keys)==1 and self.keys[0].mode==MatchMode.EXACT:
             if self.keys[0].desc is None:
                 tag = "*"
             elif not self.keys[0].re:
@@ -37,8 +43,24 @@ class Expr:
                 if k.re:
                     orconds.append(f"name()={k.desc}")
                 else:
-                    neg = ("","!")[k.negate]
-                    orconds.append(f'name(){neg}="{k.desc}"')
+                    if k.mode == MatchMode.EXACT:
+                        neg = ("","!")[k.negate]
+                        orconds.append(f'name(){neg}="{k.desc}"')
+                    elif k.mode == MatchMode.STARTSWITH:
+                        cond = f'starts-with(name(), "{k.desc}")'
+                        if k.negate:
+                            cond = f"not({cond})"
+                        orconds.append(cond)
+                    elif k.mode == MatchMode.ENDSWITH:
+                        cond = f'ends-with(name(), "{k.desc}")'
+                        if k.negate:
+                            cond = f"not({cond})"
+                        orconds.append(cond)
+                    elif k.mode == MatchMode.CONTAINS:
+                        cond = f'contains(name(), "{k.desc}")'
+                        if k.negate:
+                            cond = f"not({cond})"
+                        orconds.append(cond)
 
         if orconds:
             cond = f"[({' or '.join(orconds)})]"
@@ -105,20 +127,37 @@ class XPathTransformer(NodeVisitor):
         return ret
 
     def visit_Identifier(self, node, visited_children):
-        # print("!Identifier", node)
-        return Entity(node.text, False, False)
+        # print("!Identifier", dir(node))
+        if node.children[0].text and node.children[2]:
+            mode = MatchMode.CONTAINS
+        elif node.children[0].text:
+            mode = MatchMode.ENDSWITH
+        elif node.children[2].text:
+            mode = MatchMode.STARTSWITH
+        else:
+            mode = MatchMode.EXACT
+        return Entity(node.children[1].text, mode, False, False)
 
     def visit_NOT(self, node, visited_children):
         return "!"
 
     def visit_String(self, node, visited_children):
-        return Entity(node.text.decode('string_escape'), False, False)
+        # print("!String", node, "=>", visited_children)
+        if node.children[0].text and node.children[2]:
+            mode = MatchMode.CONTAINS
+        elif node.children[0].text:
+            mode = MatchMode.ENDSWITH
+        elif node.children[2].text:
+            mode = MatchMode.STARTSWITH
+        else:
+            mode = MatchMode.EXACT
+        return Entity(node.text.decode('string_escape'), mode, False, False)
 
     def visit_Wildcard(self, node, visited_children):
-        return Entity(None, False, False)
+        return Entity(None, MatchMode.EXACT, False, False)
 
     def visit_Regex(self, node, visited_children):
-        return Entity(node.text, True, False)
+        return Entity(node.text, MatchMode.EXACT, True, False)
 
     def generic_visit(self, node, visited_children):
         """ The generic visit method. """
@@ -150,6 +189,30 @@ if __name__=="__main__":
         ],
         [
             "a=b",
+            ""
+        ],
+        [
+            "a..=b",
+            ""
+        ],
+        [
+            "..a=b",
+            ""
+        ],
+        [
+            "..a..,b=c",
+            ""
+        ],
+        [
+            "a=..b",
+            ""
+        ],
+        [
+            "a=b..",
+            ""
+        ],
+        [
+            "a=..b..",
             ""
         ],
         [
