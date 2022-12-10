@@ -1,18 +1,20 @@
 from parsimonious.grammar import Grammar
 
 grammar = Grammar(r"""
-Selector = IndirectChild IndirectChild*
-IndirectChild = DirectChild (" "+ DirectChild)* 
-DirectChild = Attr (CHILDOP Attr)*
-Attr = (Identifiers !(COMPARATOR / COMMA)) / (Identifiers COMPARATOR Identifiers)
+Selector = Attr ((CHILDOP Attr))*
+Attr = AttrKey / AttrKeyValue
+AttrKey = Entities !(COMPARATOR / COMMA)
+AttrKeyValue = Entities COMPARATOR Entities
 
-Identifiers = ENTITY (COMMA ENTITY)*
-ENTITY = NOT? (Identifier / String / Regex / Wildcard)
+Entities = Entity (COMMA Entity)*
+Entity = NOT? (Identifier / String / Regex / Wildcard)
 
 NOT = "!"
 COMPARATOR = ~r" *(!=|=) *"
 COMMA = " "* "," " "*
-CHILDOP = " "* ">" " "*
+CHILDOP = DIROP / INDIROP
+DIROP = " "* ">" " "*
+INDIROP = " "+
 
 Identifier = ~r"[A-Z][A-Z0-9_-]*"i
 String = ~r'"(?:[^"\\]|\\.)*"' / ~r"'(?:[^'\\]|\\.)*'"
