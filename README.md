@@ -62,6 +62,6 @@ a b>b,c,!d, e
 a b=/x/
 //a//b[((matches(string(.), "x")))]
 
-a b=/x"'/i
-//a//b[((matches(string(.), concat('x"',"'",''), "i")))]
+a b=/'x"'/i
+//a//b[((matches(string(.), concat("'","x"","'"), "i")))]
 ```

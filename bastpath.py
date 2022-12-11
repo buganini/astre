@@ -1,6 +1,7 @@
 from enum import Enum
 from parsimonious.nodes import NodeVisitor
 from parser import parse
+import re
 
 class Entities(list):
     def __repr__(self):
@@ -27,7 +28,19 @@ def _escape(s):
         return '"{}"'.format(s)
     if "'" not in s:
         return "'{}'".format(s)
-    return "concat('{}')".format(s.replace("'", "',\"'\",'"))
+    a = re.split("(')", s)
+    for i in range(0,len(a),2):
+        if a[i]:
+            a[i] = f'"{a[i]}"'
+        else:
+            a[i] = ""
+    for i in range(1,len(a),2):
+        a[i] = '"\'"'
+    if not a[0]:
+        a.pop(0)
+    if not a[-1]:
+        a.pop()
+    return "concat({})".format(",".join(a))
 
 class Expr:
     def __init__(self, keys, op, values):
@@ -320,7 +333,7 @@ if __name__=="__main__":
             ""
         ],
         [
-            "a b=/x\"'/i",
+            "a b=/'x\"'/i",
             ""
         ],
     ]
