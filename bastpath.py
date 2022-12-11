@@ -194,7 +194,7 @@ class XPathTransformer(NodeVisitor):
             mode = MatchMode.STARTSWITH
         else:
             mode = MatchMode.EXACT
-        return Entity(node.text.decode('string_escape'), mode, False)
+        return Entity(node.text[1:-1].encode().decode("unicode-escape"), mode, False)
 
     def visit_Wildcard(self, node, visited_children):
         return Entity(None, MatchMode.EXACT, False)
@@ -245,6 +245,10 @@ if __name__=="__main__":
         ],
         [
             "a=b",
+            ""
+        ],
+        [
+            "a,b=c,'d',\"e\"",
             ""
         ],
         [
