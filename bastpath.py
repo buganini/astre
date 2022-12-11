@@ -109,7 +109,7 @@ class Expr:
             andconds.append(f"({' or '.join(keyconds)})")
         if valconds:
             andconds.append(f"({' or '.join(valconds)})")
-            andconds.append("string(..)!=string(.)")
+            # andconds.append("string(..)!=string(.)")
 
         if andconds:
             cond = f"[({' and '.join(andconds)})]"
