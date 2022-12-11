@@ -23,10 +23,10 @@ class Entity:
         return f"{neg}{desc}"
 
 def _escape(s):
-    if "'" not in s:
-        return "'{}'".format(s)
     if '"' not in s:
         return '"{}"'.format(s)
+    if "'" not in s:
+        return "'{}'".format(s)
     return "concat('{}')".format(s.replace("'", "',\"'\",'"))
 
 class Expr:
@@ -37,7 +37,7 @@ class Expr:
 
     def __repr__(self):
         keyconds = []
-        if len(self.keys)==1 and self.keys[0].mode==MatchMode.EXACT:
+        if len(self.keys)==1 and not self.keys[0].negate and self.keys[0].mode==MatchMode.EXACT:
             if self.keys[0].desc is None:
                 tag = "*"
             else:

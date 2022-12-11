@@ -45,7 +45,7 @@ a=!..b..
 //a[((not(contains(string(.), "b"))) and string(..)!=string(.))]
 
 !a=b
-//a[((string(.)="b") and string(..)!=string(.))]
+//*[((name()!="a") and (string(.)="b") and string(..)!=string(.))]
 
 a,b=c
 //*[((name()="a" or name()="b") and (string(.)="c") and string(..)!=string(.))]
