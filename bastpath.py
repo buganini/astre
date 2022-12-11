@@ -22,6 +22,13 @@ class Entity:
         desc = [self.desc,"*"][self.desc is None]
         return f"{neg}{desc}"
 
+def _escape(s):
+    if "'" not in s:
+        return "'{}'".format(s)
+    if '"' not in s:
+        return '"{}"'.format(s)
+    return "concat('{}')".format(s.replace("'", "',\"'\",'"))
+
 class Expr:
     def __init__(self, keys, op, values):
         self.keys = keys
@@ -40,19 +47,19 @@ class Expr:
             for k in self.keys:
                 if k.mode == MatchMode.EXACT:
                     op = ("=","!=")[k.negate]
-                    keyconds.append(f'name(){op}"{k.desc}"')
+                    keyconds.append(f'name(){op}{_escape(k.desc)}')
                 elif k.mode == MatchMode.STARTSWITH:
-                    cond = f'starts-with(name(), "{k.desc}")'
+                    cond = f'starts-with(name(), {_escape(k.desc)})'
                     if k.negate:
                         cond = f"not({cond})"
                     keyconds.append(cond)
                 elif k.mode == MatchMode.ENDSWITH:
-                    cond = f'ends-with(name(), "{k.desc}")'
+                    cond = f'ends-with(name(), {_escape(k.desc)})'
                     if k.negate:
                         cond = f"not({cond})"
                     keyconds.append(cond)
                 elif k.mode == MatchMode.CONTAINS:
-                    cond = f'contains(name(), "{k.desc}")'
+                    cond = f'contains(name(), {_escape(k.desc)})'
                     if k.negate:
                         cond = f"not({cond})"
                     keyconds.append(cond)
@@ -61,7 +68,7 @@ class Expr:
                         flags = f', "{k.desc[1]}"'
                     else:
                         flags = ""
-                    cond = f'matches(name(), "{k.desc[0]}"{flags})'
+                    cond = f'matches(name(), {_escape(k.desc[0])}{flags})'
                     if k.negate:
                         cond = f"not({cond})"
                     keyconds.append(cond)
@@ -71,19 +78,19 @@ class Expr:
             for v in self.values:
                 if v.mode == MatchMode.EXACT:
                     neg = ("","!")[v.negate]
-                    valconds.append(f'string(.){neg}="{v.desc}"')
+                    valconds.append(f'string(.){neg}={_escape(v.desc)}')
                 elif v.mode == MatchMode.STARTSWITH:
-                    cond = f'starts-with(string(.), "{v.desc}")'
+                    cond = f'starts-with(string(.), {_escape(v.desc)})'
                     if v.negate:
                         cond = f"not({cond})"
                     valconds.append(cond)
                 elif v.mode == MatchMode.ENDSWITH:
-                    cond = f'ends-with(string(.), "{v.desc}")'
+                    cond = f'ends-with(string(.), {_escape(v.desc)})'
                     if v.negate:
                         cond = f"not({cond})"
                     valconds.append(cond)
                 elif v.mode == MatchMode.CONTAINS:
-                    cond = f'contains(string(.), "{v.desc}")'
+                    cond = f'contains(string(.), {_escape(v.desc)})'
                     if v.negate:
                         cond = f"not({cond})"
                     valconds.append(cond)
@@ -92,7 +99,7 @@ class Expr:
                         flags = f', "{v.desc[1]}"'
                     else:
                         flags = ""
-                    cond = f'matches(string(.), "{v.desc[0]}"{flags})'
+                    cond = f'matches(string(.), {_escape(v.desc[0])}{flags})'
                     if v.negate:
                         cond = f"not({cond})"
                     valconds.append(cond)
@@ -313,7 +320,7 @@ if __name__=="__main__":
             ""
         ],
         [
-            "a b=/x/i",
+            "a b=/x\"'/i",
             ""
         ],
     ]

@@ -62,8 +62,6 @@ a b>b,c,!d, e
 a b=/x/
 //a//b[((matches(string(.), "x")) and string(..)!=string(.))]
 
-a b=/x/i
-//a//b[((matches(string(.), "x", "i")) and string(..)!=string(.))]
+a b=/x"'/i
+//a//b[((matches(string(.), concat('x"',"'",''), "i")) and string(..)!=string(.))]
 ```
-# TODO
-* String escaping
