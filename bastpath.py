@@ -312,6 +312,10 @@ if __name__=="__main__":
             "a b=/x/",
             ""
         ],
+        [
+            "a b=/x/i",
+            ""
+        ],
     ]
     for sel, xpath in tests:
         b = Bastpath(sel)
