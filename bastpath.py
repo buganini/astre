@@ -71,19 +71,19 @@ class Expr:
             for v in self.values:
                 if v.mode == MatchMode.EXACT:
                     neg = ("","!")[v.negate]
-                    valconds.append(f'(string(.){neg}="{v.desc}" and string(..)!=string(.))')
+                    valconds.append(f'string(.){neg}="{v.desc}"')
                 elif v.mode == MatchMode.STARTSWITH:
-                    cond = f'(starts-with(string(.), "{v.desc}") and string(..)!=string(.))'
+                    cond = f'starts-with(string(.), "{v.desc}")'
                     if v.negate:
                         cond = f"not({cond})"
                     valconds.append(cond)
                 elif v.mode == MatchMode.ENDSWITH:
-                    cond = f'(ends-with(string(.), "{v.desc}") and string(..)!=string(.))'
+                    cond = f'ends-with(string(.), "{v.desc}")'
                     if v.negate:
                         cond = f"not({cond})"
                     valconds.append(cond)
                 elif v.mode == MatchMode.CONTAINS:
-                    cond = f'(contains(string(.), "{v.desc}") and string(..)!=string(.))'
+                    cond = f'contains(string(.), "{v.desc}")'
                     if v.negate:
                         cond = f"not({cond})"
                     valconds.append(cond)
@@ -92,7 +92,7 @@ class Expr:
                         flags = f', "{v.desc[1]}"'
                     else:
                         flags = ""
-                    cond = f'(matches(string(.), "{v.desc[0]}"{flags}) and string(..)!=string(.))'
+                    cond = f'matches(string(.), "{v.desc[0]}"{flags})'
                     if v.negate:
                         cond = f"not({cond})"
                     valconds.append(cond)
@@ -102,6 +102,7 @@ class Expr:
             andconds.append(f"({' or '.join(keyconds)})")
         if valconds:
             andconds.append(f"({' or '.join(valconds)})")
+            andconds.append("string(..)!=string(.)")
 
         if andconds:
             cond = f"[({' and '.join(andconds)})]"
